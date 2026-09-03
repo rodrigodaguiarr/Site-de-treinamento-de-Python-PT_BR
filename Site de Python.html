@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER_PYTHON // 2077 IDE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #030007;
+            --bg-panel: #0a0216;
+            --border-cyber: #ff0055;
+            --border-glow: rgba(255, 0, 85, 0.4);
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-yellow: #ffee00;
+            --text-main: #ffffff;
+            --text-muted: #b8a5d8;
+            --success: #00ff66;
+            --error: #ff3366;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        .cyber-topbar {
+            background-color: var(--bg-panel);
+            border-bottom: 2px solid var(--neon-pink);
+            box-shadow: 0 0 15px var(--border-glow);
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .cyber-logo {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cyber-logo span {
+            color: var(--neon-pink);
+            text-shadow: 0 0 8px rgba(255, 0, 85, 0.6);
+        }
+
+        .sys-status {
+            font-size: 0.85rem;
+            color: var(--neon-yellow);
+            text-shadow: 0 0 5px rgba(254, 238, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+
+        .cyber-layout {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 55px);
+        }
+
+        .cyber-sidebar {
+            width: 280px;
+            background-color: var(--bg-panel);
+            border-right: 2px solid var(--neon-cyan);
+            box-shadow: 5px 0 15px rgba(0, 240, 255, 0.05);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--neon-pink);
+            letter-spacing: 2px;
+            border-bottom: 1px dashed var(--neon-pink);
+            padding-bottom: 8px;
+        }
+
+        .nav-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: rgba(0, 240, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            padding: 10px 14px;
+            text-align: left;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            clip-path: polygon(0 0, 95% 0, 100% 30%, 100% 100%, 0 100%);
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(0, 240, 255, 0.2);
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+            transform: translateX(4px);
+        }
+
+        .nav-btn.active {
+            border-left: 4px solid var(--neon-pink);
+        }
+
+        .cyber-workspace {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            background: radial-gradient(circle at 80% 20%, rgba(255, 0, 85, 0.05) 0%, transparent 50%);
+        }
+
+        .hud-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .hud-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-cyber);
+            box-shadow: inset 0 0 10px rgba(255, 0, 85, 0.1), 0 0 10px rgba(255, 0, 85, 0.15);
+            padding: 15px 20px;
+            position: relative;
+        }
+
+        .hud-card label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .hud-card span {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+        }
+
+        .challenge-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 2px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+
+        .challenge-card.facil { border-left: 6px solid var(--success); }
+        .challenge-card.intermediario { border-left: 6px solid var(--neon-yellow); }
+        .challenge-card.dificil { border-left: 6px solid var(--error); }
+
+        .card-header {
+            background: rgba(13, 5, 28, 0.95);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-id {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .threat-badge {
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 4px 10px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+        .threat-badge.facil { background: rgba(0, 255, 102, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .threat-badge.intermediario { background: rgba(254, 238, 0, 0.2); color: var(--neon-yellow); border: 1px solid var(--neon-yellow); }
+        .threat-badge.dificil { background: rgba(255, 51, 102, 0.2); color: var(--error); border: 1px solid var(--error); }
+
+        .card-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .task-desc {
+            font-size: 1.15rem;
+            color: var(--text-main);
+            font-weight: bold;
+        }
+
+        .cyber-briefing {
+            background: rgba(0, 240, 255, 0.03);
+            border-left: 3px solid var(--neon-cyan);
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .cyber-briefing strong {
+            color: var(--neon-cyan);
+        }
+
+        .terminal-code-box {
+            background: #010003;
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            padding: 16px;
+            font-size: 1.05rem;
+            overflow-x: auto;
+        }
+
+        .code-line {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .line-num {
+            color: #6c5893;
+            user-select: none;
+            width: 25px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .code-content {
+            color: #ffffff;
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .cyber-input {
+            background: #140728;
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            padding: 6px 12px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.05rem;
+            font-weight: bold;
+            width: 170px;
+            outline: none;
+            transition: all 0.2s;
+            box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.3);
+        }
+
+        .cyber-input:focus {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 12px rgba(255, 0, 85, 0.6);
+            color: var(--neon-pink);
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .cyber-btn {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            padding: 9px 22px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        }
+
+        .cyber-btn:hover {
+            background: var(--neon-cyan);
+            color: var(--bg-deep);
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .terminal-feedback {
+            font-size: 1rem;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        .terminal-feedback.correct { color: var(--success); text-shadow: 0 0 8px rgba(0, 255, 102, 0.7); }
+        .terminal-feedback.incorrect { color: var(--error); text-shadow: 0 0 8px rgba(255, 51, 102, 0.7); }
+    </style>
+</head>
+<body>
+
+    <header class="cyber-topbar">
+        <div class="cyber-logo">
+            <span>//</span> CYBER_PYTHON_2077 <span class="blink">_</span>
+        </div>
+        <div class="sys-status">
+            <span>TREINAMENTO</span>
+            <span>SIMULADO</span>
+        </div>
+    </header>
+
+    <div class="cyber-layout">
+        <aside class="cyber-sidebar">
+            <div class="sidebar-title">// SECTOR_NAV</div>
+            <div class="nav-tree">
+                <button class="nav-btn active" onclick="filterQuestions('all')">📂 ALL_PROTOCOLS.py</button>
+                <button class="nav-btn" onclick="filterQuestions('facil')">🟢 SECTOR_01 [INIT]</button>
+                <button class="nav-btn" onclick="filterQuestions('intermediario')">🟡 SECTOR_02 [MID]</button>
+                <button class="nav-btn" onclick="filterQuestions('dificil')">🔴 SECTOR_03 [CORE]</button>
+            </div>
+            <div class="sidebar-title" style="margin-top: 20px;">// SYSTEM_LOGS</div>
+            <div style="font-size: 0.9rem; color: #d4c5f9; line-height: 1.5; font-weight: bold;">
+                > Leia os fundamentos antes de executar.<br>
+                > Use as dicas para destravar o código.
+            </div>
+        </aside>
+
+        <main class="cyber-workspace">
+            <div class="hud-grid">
+                <div class="hud-card">
+                    <label>TOTAL DE SECTORES</label>
+                    <span id="stat-total">60</span>
+                </div>
+                <div class="hud-card">
+                    <label>BYPASSES BEM-SUCEDIDOS</label>
+                    <span id="stat-score" style="color: var(--success);">0</span>
+                </div>
+                <div class="hud-card">
+                    <label>TAXA DE SINCRONIZAÇÃO</label>
+                    <span id="stat-progress">0%</span>
+                </div>
+            </div>
+
+            <div id="quiz-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+        </main>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            let now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'type') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(1200, now);
+                gainNode.gain.setValueAtTime(0.02, now);
+                gainNode.gain.linearRampToValueAtTime(0.001, now + 0.03);
+                osc.start(now);
+                osc.stop(now + 0.03);
+            } else if (type === 'success') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(587.33, now);
+                osc.frequency.setValueAtTime(880, now + 0.08);
+                gainNode.gain.setValueAtTime(0.08, now);
+                gainNode.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+
+        const questions = [
+            { id: 1, level: 'facil', text: 'Imprimir dados na matriz de saída', hint: '<strong>Fundamento:</strong> A função nativa para exibir informações na tela.<br>💡 <em>Dica:</em> Textos em Python exigem aspas duplas ou simples.', code: 'print([INPUT])', answer: '"Olá, Mundo!"' },
+            { id: 2, level: 'facil', text: 'Alocar valor inteiro na RAM interna', hint: '<strong>Fundamento:</strong> Variáveis guardam dados. Para números inteiros (int), não usamos aspas.<br>💡 <em>Dica:</em> Digite qualquer número inteiro (ex: 18, 20, 25).', code: 'idade = [INPUT]', answer: '18' },
+            { id: 3, level: 'facil', text: 'Converter input de string para integer', hint: '<strong>Fundamento:</strong> O comando `input()` sempre retorna texto. Precisamos transformá-lo em número para fazer contas.<br>💡 <em>Dica:</em> Qual é a abreviação de inteiro em Python?', code: 'num = [INPUT](input())', answer: 'int' },
+            { id: 4, level: 'facil', text: 'Analisar tipo de dado computado', hint: '<strong>Fundamento:</strong> Essencial para depuração (debugging) de programas corrompidos.<br>💡 <em>Dica:</em> A função começa com a letra "t".', code: 'tipo = [INPUT](10)', answer: 'type' },
+            { id: 5, level: 'facil', text: 'Operador aritmético de soma de matriz', hint: '<strong>Fundamento:</strong> Operações matemáticas básicas do núcleo Python.<br>💡 <em>Dica:</em> O símbolo padrão de adição.', code: 'soma = 4 [INPUT] 2', answer: '+' },
+            { id: 6, level: 'facil', text: 'Operador aritmético de subtração básica', hint: '<strong>Fundamento:</strong> Reduzir valores dentro do script.<br>💡 <em>Dica:</em> O hífen comum do teclado.', code: 'sub = 10 [INPUT] 4', answer: '-' },
+            { id: 7, level: 'facil', text: 'Operador de multiplicação cibernética', hint: '<strong>Fundamento:</strong> Multiplicar fluxos de dados ou repetições.<br>💡 <em>Dica:</em> O asterisco (*).', code: 'mult = 3 [INPUT] 5', answer: '*' },
+            { id: 8, level: 'facil', text: 'Operador de divisão padrão do sistema', hint: '<strong>Fundamento:</strong> Dividir matrizes numéricas.<br>💡 <em>Dica:</em> A barra diagonal (/ ).', code: 'div = 10 [INPUT] 2', answer: '/' },
+            { id: 9, level: 'facil', text: 'Atribuir string com ID de usuário', hint: '<strong>Fundamento:</strong> Strings representam textos literais.<br>💡 <em>Dica:</em> Inclua o nome entre aspas.', code: 'nome = [INPUT]("Ana")', answer: '"Ana"' },
+            { id: 10, level: 'facil', text: 'Atribuir sinal booleano True ativado', hint: '<strong>Fundamento:</strong> Variáveis lógicas binárias (Verdadeiro/Falso).<br>💡 <em>Dica:</em> Letra T maiúscula obrigatória.', code: 'ativo = [INPUT]', answer: 'True' },
+            { id: 11, level: 'facil', text: 'Atribuir sinal booleano False desativado', hint: '<strong>Fundamento:</strong> Estado lógico de desligamento.<br>💡 <em>Dica:</em> Letra F maiúscula obrigatória.', code: 'logado = [INPUT]', answer: 'False' },
+            { id: 12, level: 'facil', text: 'Função de captura de stream de entrada', hint: '<strong>Fundamento:</strong> Permite que o usuário digite algo para o programa ler.<br>💡 <em>Dica:</em> O nome da função remete a "entrar".', code: 'nome = [INPUT]()', answer: 'input' },
+            { id: 13, level: 'facil', text: 'Converter dígito numérico em string', hint: '<strong>Fundamento:</strong> Útil para concatenar textos e números.<br>💡 <em>Dica:</em> Abreviação de "string".', code: 'texto = [INPUT](123)', answer: 'str' },
+            { id: 14, level: 'facil', text: 'Converter string corrompida em float', hint: '<strong>Fundamento:</strong> Cria números decimais precisos.<br>💡 <em>Dica:</em> Nome do tipo de dado decimal.', code: 'decimal = [INPUT]("5.5")', answer: 'float' },
+            { id: 15, level: 'facil', text: 'Operador composto de incremento lógico', hint: '<strong>Fundamento:</strong> Atalho para somar e reatribuir ao mesmo tempo (x += 1).<br>💡 <em>Dica:</em> Qual operador vai antes do sinal de igual?', code: 'x = 5\nx [INPUT]= 1', answer: '+' },
+            { id: 16, level: 'facil', text: 'Operador composto de multiplicação rápida', hint: '<strong>Fundamento:</strong> Atalho para multiplicar valores de forma compacta.<br>💡 <em>Dica:</em> O asterisco (*).', code: 'x = 2\nx [INPUT]= 3', answer: '*' },
+            { id: 17, level: 'facil', text: 'Parametrizar separador personalizado do print', hint: '<strong>Fundamento:</strong> Modifica o caractere entre os argumentos impressos.<br>💡 <em>Dica:</em> As três primeiras letras de "separator".', code: 'print("A", "B", [INPUT]="-")', answer: 'sep' },
+            { id: 18, level: 'facil', text: 'Parametrizar finalização do print de tela', hint: '<strong>Fundamento:</strong> Define o que acontece no fim do print (por padrão pula linha).<br>💡 <em>Dica:</em> Significa "fim" em inglês.', code: 'print("Olá", [INPUT]="")', answer: 'end' },
+            { id: 19, level: 'facil', text: 'Sintaxe para isolar comentário no script', hint: '<strong>Fundamento:</strong> Linhas ignoradas pelo interpretador, usadas para anotações.<br>💡 <em>Dica:</em> Conhecido como cerquilha ou jogo da velha.', code: '[INPUT] Este é um comentário', answer: '#' },
+            { id: 20, level: 'facil', text: 'Carregar biblioteca de dados externos', hint: '<strong>Fundamento:</strong> Importa módulos extras para ampliar o poder do Python.<br>💡 <em>Dica:</em> Significa "importar" em inglês.', code: '[INPUT] decimal', answer: 'import' },
+
+            { id: 21, level: 'intermediario', text: 'Gerador iterativo de loop sequencial', hint: '<strong>Fundamento:</strong> Cria uma sequência numérica automática para laços de repetição.<br>💡 <em>Dica:</em> Significa "intervalo/alcance".', code: 'for i in [INPUT](5):\n    print(i)', answer: 'range' },
+            { id: 22, level: 'intermediario', text: 'Condicional base de tomada de decisão', hint: '<strong>Fundamento:</strong> Executa blocos de código apenas se uma condição for verdadeira.<br>💡 <em>Dica:</em> Significa "se" em inglês.', code: '[INPUT] x > 10:\n    print("Maior")', answer: 'if' },
+            { id: 23, level: 'intermediario', text: 'Verificação secundária encadeada (else if)', hint: '<strong>Fundamento:</strong> Testa múltiplas condições em sequência.<br>💡 <em>Dica:</em> Junção de "else" com "if".', code: 'if x > 10:\n    pass\n[INPUT] x == 10:\n    pass', answer: 'elif' },
+            { id: 24, level: 'intermediario', text: 'Exceção padrão alternativa final', hint: '<strong>Fundamento:</strong> O "último recurso" caso nenhuma condição anterior seja atendida.<br>💡 <em>Dica:</em> Significa "senão".', code: 'if x > 10:\n    pass\n[INPUT]:\n    pass', answer: 'else' },
+            { id: 25, level: 'intermediario', text: 'Método para injetar elemento no fim da matriz', hint: '<strong>Fundamento:</strong> Adiciona itens dinamicamente em listas.<br>💡 <em>Dica:</em> Significa "anexar/acrescentar".', code: 'lista = [1, 2]\nlista.[INPUT](3)', answer: 'append' },
+            { id: 26, level: 'intermediario', text: 'Palavra-chave para compilar funções customizadas', hint: '<strong>Fundamento:</strong> Cria blocos de código reutilizáveis.<br>💡 <em>Dica:</em> Abreviação de "define" (definir).', code: '[INPUT] somar(a, b):\n    return a + b', answer: 'def' },
+            { id: 27, level: 'intermediario', text: 'Função para escanear comprimento de vetores', hint: '<strong>Fundamento:</strong> Conta quantos elementos existem em uma lista ou string.<br>💡 <em>Dica:</em> Abreviação de "length" (comprimento).', code: 'tamanho = [INPUT](minha_lista)', answer: 'len' },
+            { id: 28, level: 'intermediario', text: 'Loop lógico repetitivo condicional', hint: '<strong>Fundamento:</strong> Repete um bloco enquanto a condição for verdadeira.<br>💡 <em>Dica:</em> Significa "enquanto".', code: '[INPUT] x < 10:\n    x += 1', answer: 'while' },
+            { id: 29, level: 'intermediario', text: 'Método para inserir item em índice indexado', hint: '<strong>Fundamento:</strong> Posiciona um elemento exatamente onde você quiser na lista.<br>💡 <em>Dica:</em> Significa "inserir".', code: 'lista.[INPUT](0, "inicio")', answer: 'insert' },
+            { id: 30, level: 'intermediario', text: 'Método para expurgar elemento corrompido', hint: '<strong>Fundamento:</strong> Remove um item específico da lista pelo valor.<br>💡 <em>Dica:</em> Significa "remover".', code: 'lista.[INPUT](10)', answer: 'remove' },
+            { id: 31, level: 'intermediario', text: 'Método para capturar e remover última porta', hint: '<strong>Fundamento:</strong> Remove e retorna o último elemento de uma lista.<br>💡 <em>Dica:</em> Nome curto de estouro/retirada.', code: 'item = lista.[INPUT]()', answer: 'pop' },
+            { id: 32, level: 'intermediario', text: 'Método para realinhar ordem de matriz', hint: '<strong>Fundamento:</strong> Organiza os elementos em ordem crescente ou alfabética.<br>💡 <em>Dica:</em> Significa "ordenar/organizar".', code: 'lista.[INPUT]()', answer: 'sort' },
+            { id: 33, level: 'intermediario', text: 'Método para inverter matriz de dados', hint: '<strong>Fundamento:</strong> Espelha a ordem atual dos itens na lista.<br>💡 <em>Dica:</em> Significa "reverter/inverter".', code: 'lista.[INPUT]()', answer: 'reverse' },
+            { id: 34, level: 'intermediario', text: 'Sintaxe para abrir tupla imutável', hint: '<strong>Fundamento:</strong> Tuplas guardam dados que não podem ser alterados depois.<br>💡 <em>Dica:</em> Qual caractere abre parênteses?', code: 'meu_tuple = [INPUT]1, 2, 3[INPUT]', answer: '(' },
+            { id: 35, level: 'intermediario', text: 'Sintaxe para abrir banco de dados chave-valor', hint: '<strong>Fundamento:</strong> Estruturas de dicionários em Python usam chaves.<br>💡 <em>Dica:</em> Qual caractere representa chaves `{`?', code: 'dados = [INPUT]"nome": "Ana"[INPUT]', answer: '{' },
+            { id: 36, level: 'intermediario', text: 'Método para listar índices de chaves', hint: '<strong>Fundamento:</strong> Extrai apenas as chaves de um dicionário.<br>💡 <em>Dica:</em> Significa "chaves" em inglês.', code: 'chaves = dados.[INPUT]()', answer: 'keys' },
+            { id: 37, level: 'intermediario', text: 'Método para extrair valores internos', hint: '<strong>Fundamento:</strong> Extrai o conteúdo correspondente às chaves do dicionário.<br>💡 <em>Dica:</em> Significa "valores".', code: 'valores = dados.[INPUT]()', answer: 'values' },
+            { id: 38, level: 'intermediario', text: 'Comando para forçar parada de loop crítico', hint: '<strong>Fundamento:</strong> Interrompe imediatamente um laço de repetição.<br>💡 <em>Dica:</em> Significa "quebrar/parar".', code: 'for i in range(10):\n    [INPUT]', answer: 'break' },
+            { id: 39, level: 'intermediario', text: 'Comando para pular ciclo atual da thread', hint: '<strong>Fundamento:</strong> Pula para a próxima iteração do loop sem encerrá-lo.<br>💡 <em>Dica:</em> Significa "continuar".', code: 'for i in range(10):\n    [INPUT]', answer: 'continue' },
+            { id: 40, level: 'intermediario', text: 'Instrução nula de alinhamento estrutural', hint: '<strong>Fundamento:</strong> Usado como espaço reservado quando o código ainda será escrito.<br>💡 <em>Dica:</em> Significa "passar/ignorar".', code: 'if x > 10:\n    [INPUT]', answer: 'pass' },
+
+            { id: 41, level: 'dificil', text: 'Operador de super-potenciação de matriz', hint: '<strong>Fundamento:</strong> Eleva um número a uma potência (ex: $2^3$).<br>💡 <em>Dica:</em> Dois asteriscos juntos (**).', code: 'res = 2 [INPUT] 3', answer: '**' },
+            { id: 42, level: 'dificil', text: 'Operador de divisão inteira blindada', hint: '<strong>Fundamento:</strong> Divide e descarta a parte decimal, retornando apenas inteiros.<br>💡 <em>Dica:</em> Duas barras diagonais (//).', code: 'res = 7 [INPUT] 2', answer: '//' },
+            { id: 43, level: 'dificil', text: 'Operador de cálculo de resto modular', hint: '<strong>Fundamento:</strong> Retorna o resto de uma divisão matemática.<br>💡 <em>Dica:</em> O símbolo de porcentagem (%).', code: 'resto = 5 [INPUT] 2', answer: '%' },
+            { id: 44, level: 'dificil', text: 'Escopo de captura de falhas do sistema', hint: '<strong>Fundamento:</strong> Tenta executar um bloco arriscado evitando crash do sistema.<br>💡 <em>Dica:</em> Significa "tentar".', code: '[INPUT]:\n    x = int("abc")\nexcept:\n    pass', answer: 'try' },
+            { id: 45, level: 'dificil', text: 'Filtro específico de rastreio de erro', hint: '<strong>Fundamento:</strong> Captura a exceção caso o bloco `try` falhe.<br>💡 <em>Dica:</em> Significa "exceto".', code: 'try:\n    pass\n[INPUT] ValueError:\n    print("Erro")', answer: 'except' },
+            { id: 46, level: 'dificil', text: 'Bloco de segurança executado pós-falha', hint: '<strong>Fundamento:</strong> Código rodado independentemente de ter ocorrido erro ou sucesso.<br>💡 <em>Dica:</em> Significa "finalmente".', code: 'try:\n    pass\n[INPUT]:\n    print("Fim")', answer: 'finally' },
+            { id: 47, level: 'dificil', text: 'Iterador avançado de list comprehension', hint: '<strong>Fundamento:</strong> Cria listas de forma ultra-otimizada em uma única linha.<br>💡 <em>Dica:</em> Usa a estrutura clássica de repetição.', code: 'dobro = [x * 2 [INPUT] x in range(5)]', answer: 'for' },
+            { id: 48, level: 'dificil', text: 'Inclusão de biblioteca global de matemática', hint: '<strong>Fundamento:</strong> Carrega funções trigonométricas e avançadas.<br>💡 <em>Dica:</em> Comando padrão de importação.', code: '[INPUT] math', answer: 'import' },
+            { id: 49, level: 'dificil', text: 'Inclusão seletiva de sub-função externa', hint: '<strong>Fundamento:</strong> Importa apenas uma ferramenta específica de um pacote.<br>💡 <em>Dica:</em> Começa com a palavra "de/a partir de".', code: '[INPUT] sqrt [INPUT] math', answer: 'from' },
+            { id: 50, level: 'dificil', text: 'Atribuição de apelido de rede para módulos', hint: '<strong>Fundamento:</strong> Cria um codinome curto para bibliotecas longas (ex: numpy as np).<br>💡 <em>Dica:</em> Significa "como".', code: 'import numpy [INPUT] np', answer: 'as' },
+            { id: 51, level: 'dificil', text: 'Declaração de função lambda anônima', hint: '<strong>Fundamento:</strong> Cria pequenas funções em linha sem precisar da palavra `def`.<br>💡 <em>Dica:</em> Nome da própria palavra-chave.', code: 'dobro = [INPUT] x: x * 2', answer: 'lambda' },
+            { id: 52, level: 'dificil', text: 'Retorno otimizado de dados via yield stream', hint: '<strong>Fundamento:</strong> Gera valores um a um sob demanda, economizando muita memória RAM.<br>💡 <em>Dica:</em> Significa "produzir/ceder".', code: 'def gerar():\n    [INPUT] 1', answer: 'yield' },
+            { id: 53, level: 'dificil', text: 'Verificador de presença em matriz fechada', hint: '<strong>Fundamento:</strong> Confere se um elemento pertence a uma lista.<br>💡 <em>Dica:</em> Significa "dentro de".', code: 'if 5 [INPUT] [1, 2, 5]:', answer: 'in' },
+            { id: 54, level: 'dificil', text: 'Validador de identidade de ponteiro de memória', hint: '<strong>Fundamento:</strong> Verifica se duas variáveis apontam para o mesmo objeto exato na RAM.<br>💡 <em>Dica:</em> Significa "é".', code: 'if a [INPUT] b:', answer: 'is' },
+            { id: 55, level: 'dificil', text: 'Conector lógico conjugado AND', hint: '<strong>Fundamento:</strong> Exige que **ambas** as condições sejam verdadeiras.<br>💡 <em>Dica:</em> Significa "e".', code: 'if x > 0 [INPUT] x < 10:', answer: 'and' },
+            { id: 56, level: 'dificil', text: 'Conector lógico alternativo OR', hint: '<strong>Fundamento:</strong> Exige que pelo menos **uma** das condições seja verdadeira.<br>💡 <em>Dica:</em> Significa "ou".', code: 'if x == 0 [INPUT] x == 1:', answer: 'or' },
+            { id: 57, level: 'dificil', text: 'Inversor booleano de sinal NOT', hint: '<strong>Fundamento:</strong> Inverte o valor lógico (transforma True em False e vice-versa).<br>💡 <em>Dica:</em> Significa "não".', code: 'if [INPUT] ativo:', answer: 'not' },
+            { id: 58, level: 'dificil', text: 'Comando de interface de arquivos de dados', hint: '<strong>Fundamento:</strong> Abre arquivos externos no disco para leitura ou escrita.<br>💡 <em>Dica:</em> Significa "abrir".', code: 'arquivo = [INPUT]("dados.txt", "r")', answer: 'open' },
+            { id: 59, level: 'dificil', text: 'Gerenciador seguro de túnel de arquivos', hint: '<strong>Fundamento:</strong> Garante que o arquivo seja fechado automaticamente após o uso.<br>💡 <em>Dica:</em> Significa "com".', code: '[INPUT] open("file.txt") as f:', answer: 'with' },
+            { id: 60, level: 'dificil', text: 'Separador de empacotamento de múltiplos dados', hint: '<strong>Fundamento:</strong> Separa múltiplos valores retornados em conjunto.<br>💡 <em>Dica:</em> O sinal de pontuação padrão de listagem.', code: 'return a, b [INPUT] c', answer: ',' }
+        ];
+
+        let userAnswers = {};
+
+        function renderQuestions(filter = 'all') {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            const filtered = filter === 'all' ? questions : questions.filter(q => q.level === filter);
+            document.getElementById('stat-total').textContent = questions.length;
+
+            filtered.forEach((q) => {
+                const card = document.createElement('div');
+                card.className = `challenge-card ${q.level}`;
+                
+                const lines = q.code.split('\n');
+                let codeHtml = '';
+                
+                lines.forEach((line, lineIdx) => {
+                    const formattedLine = line.replace('[INPUT]', `<input type="text" class="cyber-input" id="q-${q.id}" value="${userAnswers[q.id] || ''}" placeholder="input..." oninput="saveInput(${q.id})" onkeydown="playSound('type')">`);
+                    codeHtml += `
+                        <div class="code-line">
+                            <span class="line-num">${lineIdx + 1}</span>
+                            <span class="code-content">${formattedLine}</span>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="task-id">// PROTOCOL_ID: #${q.id}</span>
+                        <span class="threat-badge ${q.level}">${q.level.toUpperCase()}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="task-desc">⚡ Target: ${q.text}</div>
+                        <div class="cyber-briefing">${q.hint}</div>
+                        <div class="terminal-code-box">
+                            ${codeHtml}
+                        </div>
+                        <div class="card-footer">
+                            <button class="cyber-btn" onclick="playSound('click'); checkAnswer(${q.id}, '${q.answer.replace(/'/g, "\\'")}')">[ EXEC_BYPASS ]</button>
+                            <span id="feedback-${q.id}" class="terminal-feedback"></span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            updateStats();
+        }
+
+        function saveInput(id) {
+            const input = document.getElementById(`q-${id}`);
+            if(input) {
+                userAnswers[id] = input.value;
+            }
+        }
+
+        function checkAnswer(id, correct) {
+            const input = document.getElementById(`q-${id}`);
+            const feedback = document.getElementById(`feedback-${id}`);
+            const val = input.value.trim();
+
+            if (val === '') {
+                feedback.textContent = '⚠️ NULL_VALUE';
+                feedback.className = 'terminal-feedback';
+                playSound('error');
+                return;
+            }
+
+            let isCorrect = false;
+            if (id === 2) {
+                // Aceita qualquer número inteiro válido para a idade
+                isCorrect = !isNaN(val) && val !== '' && !val.includes('.');
+            } else {
+                isCorrect = (val === correct);
+            }
+
+            if (isCorrect) {
+                feedback.textContent = '>> [BYPASS_SUCCESSFUL]';
+                feedback.className = 'terminal-feedback correct';
+                playSound('success');
+            } else {
+                feedback.textContent = `>> [ACCESS_DENIED: ${correct}]`;
+                feedback.className = 'terminal-feedback incorrect';
+                playSound('error');
+            }
+            updateStats();
+        }
+
+        function updateStats() {
+            let score = 0;
+            questions.forEach(q => {
+                const input = document.getElementById(`q-${q.id}`);
+                if (input) {
+                    const val = input.value.trim();
+                    if (q.id === 2 && !isNaN(val) && val !== '' && !val.includes('.')) {
+                        score++;
+                    } else if (val === q.answer) {
+                        score++;
+                    }
+                }
+            });
+            document.getElementById('stat-score').textContent = score;
+            const percent = Math.round((score / questions.length) * 100);
+            document.getElementById('stat-progress').textContent = percent + '%';
+        }
+
+        function filterQuestions(level) {
+            playSound('click');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderQuestions(level);
+        }
+
+        renderQuestions();
+    </script>
+</body>
+</html>
